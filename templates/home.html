@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="p-5 bg-white rounded shadow-sm mb-4">
+    <h1 class="fw-bold">Welcome to FinTrack</h1>
+
+    <p class="text-muted mt-3">
+        Your personal finance and mobile money tracker.
+    </p>
+
+    <a href="{% url 'add_transaction' %}" class="btn btn-success mt-3">
+        Add Transaction
+    </a>
+</div>
+<div class="row mb-4 g-3">
+
+    <div class="col-md-4">
+        <div class="p-4 bg-white rounded-4 shadow-sm border">
+
+            <h6 class="text-muted">Total Income</h6>
+            <h3 class="fw-bold text-success">
+                GHS {{ total_income }}
+            </h3>
+
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="p-4 bg-white rounded-4 shadow-sm border">
+
+            <h6 class="text-muted">Total Expenses</h6>
+            <h3 class="fw-bold text-danger">
+                GHS {{ total_expense }}
+            </h3>
+
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="p-4 bg-white rounded-4 shadow-sm border">
+
+            <h6 class="text-muted">Balance</h6>
+            <h3 class="fw-bold text-primary">
+                GHS {{ balance }}
+            </h3>
+
+        </div>
+    </div>
+
+</div>
+</div>
+<div class="bg-white p-4 rounded shadow-sm mb-4">
+    <h4 class="mb-3">Income vs Expenses</h4>
+
+    <canvas id="incomeExpenseChart"></canvas>
+</div>
+
+
+<div class="bg-white p-4 rounded-4 shadow-lg mb-4">
+
+    <div class="d-flex justify-content-between align-items-center">
+
+        <form method="GET" class="d-flex w-50">
+
+            <input
+                type="text"
+                name="search"
+                class="form-control me-2"
+                placeholder="Search transactions..."
+            >
+
+            <button
+                type="submit"
+                class="btn btn-dark"
+            >
+                Search
+            </button>
+
+        </form>
+
+        <div class="dropdown">
+
+            <button
+                class="btn btn-outline-dark dropdown-toggle"
+                type="button"
+                data-bs-toggle="dropdown"
+            >
+                Filter
+            </button>
+
+            <div class="dropdown-menu p-4 shadow border-0">
+
+                <form method="GET">
+
+                    <h6 class="mb-3">
+                        Filter Transactions
+                    </h6>
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Category
+                        </label>
+
+                        <select
+                            name="category"
+                            class="form-control"
+                        >
+                            <option value="">
+                                All Categories
+                            </option>
+
+                            <option value="Food">
+                                Food
+                            </option>
+
+                            <option value="Transport">
+                                Transport
+                            </option>
+
+                            <option value="Shopping">
+                                Shopping
+                            </option>
+
+                            <option value="Bills">
+                                Bills
+                            </option>
+
+                            <option value="Salary">
+                                Salary
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Transaction Type
+                        </label>
+
+                        <select
+                            name="type"
+                            class="form-control"
+                        >
+                            <option value="">
+                                All Types
+                            </option>
+
+                            <option value="Income">
+                                Income
+                            </option>
+
+                            <option value="Expense">
+                                Expense
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="btn btn-dark w-100"
+                    >
+                        Apply Filters
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<div class="bg-white p-3 p-md-4 rounded-4 shadow-sm border bg-white">
+
+    <table class="table align-middle mb-0">
+
+        <thead>
+            <tr class="text-muted">
+                <th>Title</th>
+                <th>Amount</th>
+                <th>Category</th>
+                <th>Type</th>
+                <th>Date</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for transaction in transactions %}
+
+            <tr class="border-bottom">
+
+                <td class="fw-semibold">
+                    {{ transaction.title }}
+                </td>
+
+                <td class="fw-bold">
+                    GHS {{ transaction.amount }}
+                </td>
+
+                <td>
+                    {{ transaction.category }}
+                </td>
+
+                <td>
+                    {% if transaction.transaction_type == 'Income' %}
+                        <span class="badge bg-success">Income</span>
+                    {% else %}
+                        <span class="badge bg-danger">Expense</span>
+                    {% endif %}
+                </td>
+
+                <td class="text-muted">
+                    {{ transaction.created_at }}
+                </td>
+
+                <td class="d-flex gap-2">
+
+                    <a href="{% url 'edit_transaction' transaction.id %}"
+                       class="btn btn-sm"
+                       style="background:#6366f1;color:white;border:none;border-radius:10px;">
+                        Edit
+                    </a>
+
+                    <form action="{% url 'delete_transaction' transaction.id %}" method="post">
+                        {% csrf_token %}
+                        <button class="btn btn-sm"
+                                style="background:#0f172a;color:white;border:none;border-radius:10px;">
+                            Delete
+                        </button>
+                    </form>
+
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const ctx = document.getElementById('incomeExpenseChart');
+
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Income', 'Expenses'],
+        datasets: [{
+            data: [
+                "{{ total_income }}",
+                "{{ total_expense }}"
+            ],
+            borderWidth: 1
+        }]
+    }
+});
+</script>
+
+
+{% endblock %}
