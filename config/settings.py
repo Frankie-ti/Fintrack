@@ -34,7 +34,6 @@ INSTALLED_APPS = [
     'accounts',
     'transactions' ,
     'dashboard' ,
-    'analytics' ,
 
 
     'django.contrib.admin',
